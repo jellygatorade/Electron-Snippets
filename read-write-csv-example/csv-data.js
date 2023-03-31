@@ -4,29 +4,60 @@ const today = new Date();
 const date =
   today.getFullYear() + "-" + (today.getMonth() + 1) + "-" + today.getDate();
 
-// Read full data
-let csvContent;
+let csvContent = [];
 let fields;
+let firstLine = ["tab", "type", "name", "clicked"];
 
-Papa.parse(await readTextFile(`file:/${__dirname}/full-data.csv`), {
-  header: true,
-  complete: function (results) {
-    results.data.forEach((entry) => (entry.clicked = parseInt(entry.clicked)));
+const csvPath = `${__dirname}/full-data.csv`;
 
-    csvContent = results.data;
-    fields = results.meta.fields;
+/*
+ * Read existing csv or create if not present
+ */
+if (fs.existsSync(csvPath)) {
+  Papa.parse(await readCSV(csvPath), {
+    header: true,
+    complete: function (results) {
+      results.data.forEach(
+        (entry) => (entry.clicked = parseInt(entry.clicked))
+      );
 
-    console.log(csvContent);
-  },
-});
+      csvContent = results.data;
+      //fields = results.meta.fields;
 
-async function readTextFile(path) {
+      console.log(csvContent);
+    },
+  });
+} else {
+  await createCSV(csvPath);
+}
+
+async function readCSV(path) {
   const text = await fetch(path).then((response) => {
     return response.text();
   });
   return text;
 }
 
+async function createCSV(path) {
+  return new Promise(function (resolve, reject) {
+    let writeStream = fs.createWriteStream(path);
+    writeStream.write(firstLine.join(","), () => {});
+    writeStream.end();
+    writeStream
+      .on("finish", () => {
+        console.log("main write stream finished, moving along");
+        resolve(); // Resolve Promise
+      })
+      .on("error", (err) => {
+        console.log(err);
+        reject(); // Reject Promise
+      });
+  });
+}
+
+/*
+ * Re-write csv with new row or change
+ */
 function saveData(tab, type, name, clicked) {
   // find matching row in csvContent
   const firstMatch = csvContent.find((entry) => {
@@ -36,6 +67,8 @@ function saveData(tab, type, name, clicked) {
       entry.name === "test-button"
     );
   });
+
+  // IF CLICKED OR DURATION DATA TYPE?
 
   // if matching row
   if (firstMatch) {
@@ -49,9 +82,8 @@ function saveData(tab, type, name, clicked) {
     csvContent.push(newEntry);
   }
 
-  let writeStream = fs.createWriteStream(`${__dirname}/full-data.csv`);
+  let writeStream = fs.createWriteStream(csvPath);
 
-  let firstLine = fields;
   writeStream.write(firstLine.join(",") + "\n", () => {});
 
   console.log(csvContent);
@@ -74,58 +106,11 @@ function saveData(tab, type, name, clicked) {
 
   writeStream
     .on("finish", () => {
-      //   document.querySelectorAll(".row").forEach((row) => {
-      //     row.parentElement.removeChild(row);
-      //   });
-      //   csvContent.forEach((line) => {
-      //     var node = document.createElement("p");
-      //     node.className = "row";
-      //     node.innerHTML = `<span class='data'>${line.tab},</span> <span class='data'>${line.type},</span> <span class='data'>${line.name},</span> <span class='data'>${line.clicked}</span>`;
-      //     document.querySelector(".total-data").appendChild(node);
-      //   });
-      //console.log(csvContent);
+      // finished
     })
     .on("error", (err) => {
       console.log(err);
     });
-
-  //   let writeStream = fs.createWriteStream(`resources/app/CSVs/${date}.csv`);
-  //   let firstLine = ["tab", "type", "name", "clicked"];
-
-  //   writeStream.write(firstLine.join(",") + "\n", () => {});
-
-  //   for (let index = 0; index < csvContent.length; index++) {
-  //     const someObject = todayCsvContent[index];
-  //     let newLine = [];
-  //     newLine.push(someObject.tab);
-  //     newLine.push(someObject.type);
-  //     newLine.push(someObject.name);
-  //     newLine.push(someObject.clicked);
-  //     if (index === csvContent.length - 1) {
-  //       writeStream.write(newLine.join(","), () => {});
-  //     } else {
-  //       writeStream.write(newLine.join(",") + "\n", () => {});
-  //     }
-  //   }
-
-  //   writeStream.end();
-
-  //   writeStream
-  //     .on("finish", () => {
-  //       // document.querySelectorAll('.row').forEach(row => {
-  //       //   row.parentElement.removeChild(row)
-  //       // })
-  //       //   todayCsvContent.forEach((line) => {
-  //       //     var node = document.createElement("p");
-  //       //     node.className = "row";
-  //       //     node.innerHTML = `<span class='data'>${line.tab},</span> <span class='data'>${line.type},</span> <span class='data'>${line.name},</span> <span class='data'>${line.clicked}</span>`;
-  //       //     document.querySelector(".today-data").appendChild(node);
-  //       //   });
-  //       console.log(todayCsvContent);
-  //     })
-  //     .on("error", (err) => {
-  //       console.log(err);
-  //     });
 }
 
 export { saveData };
