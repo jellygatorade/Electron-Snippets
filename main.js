@@ -10,6 +10,14 @@ const {
 } = require("electron");
 const path = require("path");
 
+// Enable live reload for all the files inside your project directory for Electron too
+// https://ourcodeworld.com/articles/read/524/how-to-use-live-reload-in-your-electron-project
+require("electron-reload")(__dirname, {
+  // Note that the path to electron may vary according to the main file
+  // Here we go up several levels to find the electron package folder
+  electron: require(path.join(__dirname, "..", "..", "node_modules/electron")),
+});
+
 let window1;
 //let window2;
 
@@ -19,9 +27,9 @@ const createWindows = () => {
     width: 800,
     height: 600,
     webPreferences: {
-      //preload: path.join(__dirname, "preload.js"),
-      nodeIntegration: true,
-      contextIsolation: false,
+      preload: path.join(__dirname, "/read-write-csv-example/preload.js"),
+      nodeIntegration: false,
+      contextIsolation: true,
     },
   });
 
@@ -93,3 +101,13 @@ app.on("window-all-closed", () => {
 
 // Testing reloading one window but not the other
 //setInterval(() => window2.reload(), 1000);
+
+/*
+ * IPC below
+ */
+const ipcMain = require("electron").ipcMain;
+const saveData = require("./read-write-csv-example/csv-data-main-module.js");
+
+ipcMain.handle("saveDataCSV", (event, data) => {
+  saveData(data);
+});
