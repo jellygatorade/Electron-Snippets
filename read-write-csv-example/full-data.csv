@@ -1,4 +1,6 @@
-tab,type,name,clicked
-home,content,content-1,6
-home,content,content-2,2
-home,experience,experience-2,5
+tab,type,name,metric_type,clicks,avg_duration
+home,content,content-1,clicks,8,
+home,content,content-2,clicks,4,
+home,experience,experience-1,clicks,2,
+home,experience,experience-2,clicks,7,
+home,timer,test-timer-1,avg_duration,,1355.3333333333333
