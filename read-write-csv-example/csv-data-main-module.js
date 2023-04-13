@@ -1,9 +1,9 @@
 const fs = require("fs");
 const Papa = require("papaparse"); // for parsing csv
 
-// const today = new Date();
-// const date =
-//   today.getFullYear() + "-" + (today.getMonth() + 1) + "-" + today.getDate();
+const TODAY = new Date();
+const DATE =
+  TODAY.getFullYear() + "-" + (TODAY.getMonth() + 1) + "-" + TODAY.getDate();
 
 /**
  * date
@@ -18,9 +18,13 @@ const Papa = require("papaparse"); // for parsing csv
  * avg_duration
  */
 const csvFirstLine = [
-  "tab",
-  "type",
-  "name",
+  "date",
+  "action",
+  "ncma_digital_label_id",
+  "ncma_digital_label_title",
+  "ncma_artwork_id",
+  "ncma_artwork_title",
+  "ncma_artwork_artist",
   "metric_type",
   "clicks",
   "avg_duration",
@@ -28,7 +32,7 @@ const csvFirstLine = [
 let csvContent = [];
 let writeTimeout = null;
 
-const csvPath = `${__dirname}/full-data.csv`;
+const csvPath = `${__dirname}/${DATE}.csv`;
 
 initCSV();
 
@@ -49,10 +53,18 @@ async function readCSV(path) {
     readStream
       .pipe(Papa.parse(Papa.NODE_STREAM_INPUT, { header: true }))
       .on("data", (row) => {
-        console.log(row.clicks);
+        if (row.ncma_digital_label_id) {
+          row.ncma_digital_label_id = parseInt(row.ncma_digital_label_id); // convert from string to int
+        }
+
+        if (row.ncma_artwork_id) {
+          row.ncma_artwork_id = parseInt(row.ncma_artwork_id); // convert from string to int
+        }
+
         if (row.metric_type === "clicks") {
           row.clicks = parseInt(row.clicks); // convert from string to int to increment
         }
+
         csvContent.push(row);
       })
       .on("end", () => {
@@ -84,59 +96,90 @@ async function createCSV(path) {
 }
 
 /**
- * Re-write csv with new row or change
+ * Re-write csv with new row or change to existing row
  *
  * @param {object} data - row to save
- * @param {string} data.tab
- * @param {string} data.type
- * @param {string} data.name
+ * (date computed outside of function)
+ * @param {string} data.action
+ * @param {number} data.ncma_digital_label_id
+ * @param {string} data.ncma_digital_label_title
+ * @param {number} data.ncma_artwork_id
+ * @param {string} data.ncma_artwork_title
+ * @param {string} data.ncma_artwork_artist
  * @param {string} data.metric_type
  * @param {number} data.clicks
  * @param {number} data.avg_duration
  */
 function saveData(data) {
-  const { tab, type, name, metric_type, clicks, avg_duration } = data; // object destructuring
+  const {
+    // (DATE computed outside of function)
+    action,
+    ncma_digital_label_id,
+    ncma_digital_label_title,
+    ncma_artwork_id,
+    ncma_artwork_title,
+    ncma_artwork_artist,
+    metric_type,
+    // (clicks always 1 or prior value)
+    avg_duration,
+  } = data; // object destructuring
+
+  //console.log(data);
 
   // find matching row in csvContent
+  // do not check clicks or avg_duration as those will vary
   const firstMatch = csvContent.find((entry) => {
     return (
-      entry.tab === tab &&
-      entry.type === type &&
-      entry.name === name &&
+      entry.date === DATE &&
+      entry.action === action &&
+      entry.ncma_digital_label_id === ncma_digital_label_id &&
+      entry.ncma_digital_label_title === ncma_digital_label_title &&
+      entry.ncma_artwork_id === ncma_artwork_id &&
+      entry.ncma_artwork_title === ncma_artwork_title &&
+      entry.ncma_artwork_artist === ncma_artwork_artist &&
       entry.metric_type === metric_type
     );
   });
 
   // process per metric_type
+  // "clicks" or "avg_duration"
   switch (metric_type) {
     case "clicks":
-      // if matching row
+      // if existing matching row
       if (firstMatch) {
         firstMatch.clicks++; // increment clicks
       } else {
         let newEntry = {
-          tab: tab,
-          type: type,
-          name: name,
+          date: DATE,
+          action: action,
+          ncma_digital_label_id: ncma_digital_label_id,
+          ncma_digital_label_title: ncma_digital_label_title,
+          ncma_artwork_id: ncma_artwork_id,
+          ncma_artwork_title: ncma_artwork_title,
+          ncma_artwork_artist: ncma_artwork_artist,
           metric_type: metric_type,
-          clicks: clicks,
+          clicks: 1,
           avg_duration: "",
         };
-        console.log(newEntry);
         csvContent.push(newEntry); // make new row
       }
       break;
 
     case "avg_duration":
-      console.log("process avg_duration");
-      // if matching row
+      // if existing matching row
       if (firstMatch) {
         firstMatch.avg_duration = avg_duration; // replace avg_duration
+        // planning for computing weighted average with prior data?
+        // firstMatch.avg_duration = (firstMatch.avg_duration * firstMatch.count + avg_duration * timer.__history.length) / (firstMatch.count + timer.__history.length);
       } else {
         let newEntry = {
-          tab: tab,
-          type: type,
-          name: name,
+          date: DATE,
+          action: action,
+          ncma_digital_label_id: ncma_digital_label_id,
+          ncma_digital_label_title: ncma_digital_label_title,
+          ncma_artwork_id: ncma_artwork_id,
+          ncma_artwork_title: ncma_artwork_title,
+          ncma_artwork_artist: ncma_artwork_artist,
           metric_type: metric_type,
           clicks: "",
           avg_duration: avg_duration,
@@ -159,11 +202,19 @@ function writeFile() {
   //console.log(csvContent);
 
   csvContent.forEach((row, i) => {
+    if (typeof row.avg_duration === "number") {
+      row.avg_duration = row.avg_duration.toFixed(2); // convert to string with 2 decimal places before printing out csv
+    }
+
     let newRow = [];
     newRow.push(
-      row.tab,
-      row.type,
-      row.name,
+      row.date,
+      row.action,
+      row.ncma_digital_label_id,
+      row.ncma_digital_label_title,
+      row.ncma_artwork_id,
+      row.ncma_artwork_title,
+      row.ncma_artwork_artist,
       row.metric_type,
       row.clicks,
       row.avg_duration

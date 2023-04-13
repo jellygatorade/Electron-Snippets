@@ -1,6 +1,6 @@
-tab,type,name,metric_type,clicks,avg_duration
-home,content,content-1,clicks,8,
-home,content,content-2,clicks,4,
-home,experience,experience-1,clicks,2,
-home,experience,experience-2,clicks,7,
-home,timer,test-timer-1,avg_duration,,1355.3333333333333
+date,action,ncma_digital_label_id,ncma_digital_label_title,ncma_artwork_id,ncma_artwork_title,ncma_artwork_artist,metric_type,clicks,avg_duration
+2023-4-13,Engagement - Artwork,15,Kunstkamer,38,The Black Lace Dress (Portrait of the Artist's Wife),Julien Alden Wier,clicks,1,
+2023-4-13,Engagement - Artwork,15,Kunstkamer,43,New Mexico,Ansel Adams,clicks,4,
+2023-4-13,Engagement - Label,15,Kunstkamer,,,,clicks,4,
+2023-4-13,Engagement - Label,18,African,,,,clicks,2,
+2023-4-13,Time on task - Label,18,African,,,,avg_duration,,1.16

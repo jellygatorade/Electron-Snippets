@@ -107,7 +107,16 @@ app.on("window-all-closed", () => {
  */
 const ipcMain = require("electron").ipcMain;
 const saveData = require("./read-write-csv-example/csv-data-main-module.js"); // initializes csv file
+const analyticsTimerManager = require("./read-write-csv-example/analytics-timer-main-module.js");
 
 ipcMain.handle("saveDataCSV", (event, data) => {
   saveData(data);
+});
+
+ipcMain.handle("startAnalyticsTimer", (event, identity) => {
+  analyticsTimerManager.setupStart(identity);
+});
+
+ipcMain.handle("stopAnalyticsTimer", (event, identity) => {
+  analyticsTimerManager.saveReset(identity);
 });

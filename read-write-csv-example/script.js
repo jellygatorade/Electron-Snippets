@@ -1,15 +1,11 @@
-import {
-  createAnalyticsTimer,
-  findAnalyticsTimer,
-  analyticsTimer,
-} from "./analytics-timer.js";
+//import { analyticsTimerManager } from "./analytics-timer-browser-module.js";
 
 window.addEventListener("load", init);
 
 /**
  * final data format
  *
- * date
+ * (date)
  * action
  * ncma_digital_label_id
  * ncma_digital_label_title
@@ -27,74 +23,83 @@ function init() {
   const experience1Btn = document.getElementById("experience-1-btn");
   const experience2Btn = document.getElementById("experience-2-btn");
 
-  const startTimerBtn = document.getElementById("start-timer-btn");
-  const stopTimerBtn = document.getElementById("stop-timer-btn");
+  const startTimer1Btn = document.getElementById("start-timer-1-btn");
+  const stopTimer1Btn = document.getElementById("stop-timer-1-btn");
 
-  function sendCsvData(event, data) {
-    window.csvHandler.save(event, data);
-  }
+  const analyticsHandler = window.analyticsHandler;
+
+  // engagements
 
   content1Btn.addEventListener("click", (event) => {
-    sendCsvData(event, {
-      tab: "home",
-      type: "content",
-      name: "content-1",
+    analyticsHandler.save({
+      action: "Engagement - Artwork",
+      ncma_digital_label_id: 15,
+      ncma_digital_label_title: "Kunstkamer",
+      ncma_artwork_id: 38,
+      ncma_artwork_title:
+        "The Black Lace Dress (Portrait of the Artist's Wife)",
+      ncma_artwork_artist: "Julien Alden Wier",
       metric_type: "clicks",
-      clicks: 1,
     });
   });
 
   content2Btn.addEventListener("click", (event) => {
-    sendCsvData(event, {
-      tab: "home",
-      type: "content",
-      name: "content-2",
+    analyticsHandler.save({
+      action: "Engagement - Artwork",
+      ncma_digital_label_id: 15,
+      ncma_digital_label_title: "Kunstkamer",
+      ncma_artwork_id: 43,
+      ncma_artwork_title: "New Mexico",
+      ncma_artwork_artist: "Ansel Adams",
       metric_type: "clicks",
-      clicks: 1,
     });
   });
 
   experience1Btn.addEventListener("click", (event) => {
-    sendCsvData(event, {
-      tab: "home",
-      type: "experience",
-      name: "experience-1",
+    analyticsHandler.save({
+      action: "Engagement - Label",
+      ncma_digital_label_id: 15,
+      ncma_digital_label_title: "Kunstkamer",
+      ncma_artwork_id: "",
+      ncma_artwork_title: "",
+      ncma_artwork_artist: "",
       metric_type: "clicks",
-      clicks: 1,
     });
   });
 
   experience2Btn.addEventListener("click", (event) => {
-    sendCsvData(event, {
-      tab: "home",
-      type: "experience",
-      name: "experience-2",
+    analyticsHandler.save({
+      action: "Engagement - Label",
+      ncma_digital_label_id: 18,
+      ncma_digital_label_title: "African",
+      ncma_artwork_id: "",
+      ncma_artwork_title: "",
+      ncma_artwork_artist: "",
       metric_type: "clicks",
-      clicks: 1,
     });
   });
 
-  startTimerBtn.addEventListener("click", (event) => {
-    const timer = createAnalyticsTimer({
-      tab: "home",
-      type: "timer",
-      name: "test-timer-1",
-      metric_type: "avg_duration",
-    });
+  // time on task
 
-    timer.start();
+  startTimer1Btn.addEventListener("click", (event) => {
+    analyticsHandler.startTimer({
+      action: "Time on task - Label",
+      ncma_digital_label_id: 18,
+      ncma_digital_label_title: "African",
+      ncma_artwork_id: "",
+      ncma_artwork_title: "",
+      ncma_artwork_artist: "",
+    });
   });
 
-  stopTimerBtn.addEventListener("click", (event) => {
-    const timer = findAnalyticsTimer({
-      tab: "home",
-      type: "timer",
-      name: "test-timer-1",
-      metric_type: "avg_duration",
+  stopTimer1Btn.addEventListener("click", (event) => {
+    analyticsHandler.stopTimer({
+      action: "Time on task - Label",
+      ncma_digital_label_id: 18,
+      ncma_digital_label_title: "African",
+      ncma_artwork_id: "",
+      ncma_artwork_title: "",
+      ncma_artwork_artist: "",
     });
-
-    if (timer) {
-      timer.stop();
-    }
   });
 }
