@@ -5,7 +5,7 @@
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron ."
+    "start": "electron --inspect=5858 ."
   },
   "author": "Kevin Kane",
   "license": "MIT",

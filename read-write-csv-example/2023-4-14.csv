@@ -1,0 +1,7 @@
+date,action,ncma_digital_label_id,ncma_digital_label_title,ncma_artwork_id,ncma_artwork_title,ncma_artwork_artist,metric_type,clicks,avg_duration,last_avg_count
+2023-4-14,Engagement - Artwork,15,Kunstkamer,38,The Black Lace Dress (Portrait of the Artist's Wife),Julien Alden Wier,clicks,10,,
+2023-4-14,Engagement - Artwork,15,Kunstkamer,43,New Mexico,Ansel Adams,clicks,7,,
+2023-4-14,Engagement - Label,15,Kunstkamer,,,,clicks,8,,
+2023-4-14,Engagement - Label,18,African,,,,clicks,8,,
+2023-4-14,Time on task - Label,18,African,,,,avg_duration,,0.32,3
+2023-4-14,Time on task - Artwork,18,African,24,Altar to the Hand (Ikegobo),Edo peoples,avg_duration,,0.16,3

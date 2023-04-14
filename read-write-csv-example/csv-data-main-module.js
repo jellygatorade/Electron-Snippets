@@ -5,18 +5,6 @@ const TODAY = new Date();
 const DATE =
   TODAY.getFullYear() + "-" + (TODAY.getMonth() + 1) + "-" + TODAY.getDate();
 
-/**
- * date
- * action
- * ncma_digital_label_id
- * ncma_digital_label_title
- * ncma_artwork_id
- * ncma_artwork_title
- * ncma_artwork_artist
- * metric_type
- * clicks
- * avg_duration
- */
 const csvFirstLine = [
   "date",
   "action",
@@ -28,13 +16,12 @@ const csvFirstLine = [
   "metric_type",
   "clicks",
   "avg_duration",
+  "last_avg_count",
 ];
 let csvContent = [];
 let writeTimeout = null;
 
 const csvPath = `${__dirname}/${DATE}.csv`;
-
-initCSV();
 
 /*
  * Read existing csv or create if not present
@@ -63,6 +50,20 @@ async function readCSV(path) {
 
         if (row.metric_type === "clicks") {
           row.clicks = parseInt(row.clicks); // convert from string to int to increment
+        } else if (row.metric_type === "avg_duration") {
+          row.avg_duration = parseFloat(row.avg_duration);
+          row.last_avg_count = parseInt(row.last_avg_count);
+
+          analyticsTimerManager.create(false, {
+            action: row.action,
+            ncma_digital_label_id: row.ncma_digital_label_id,
+            ncma_digital_label_title: row.ncma_digital_label_title,
+            ncma_artwork_id: row.ncma_artwork_id,
+            ncma_artwork_title: row.ncma_artwork_title,
+            ncma_artwork_artist: row.ncma_artwork_artist,
+            avg_duration: row.avg_duration,
+            last_avg_count: row.last_avg_count,
+          });
         }
 
         csvContent.push(row);
@@ -122,6 +123,7 @@ function saveData(data) {
     metric_type,
     // (clicks always 1 or prior value)
     avg_duration,
+    current_avg_count,
   } = data; // object destructuring
 
   //console.log(data);
@@ -160,6 +162,7 @@ function saveData(data) {
           metric_type: metric_type,
           clicks: 1,
           avg_duration: "",
+          last_avg_count: "",
         };
         csvContent.push(newEntry); // make new row
       }
@@ -168,9 +171,14 @@ function saveData(data) {
     case "avg_duration":
       // if existing matching row
       if (firstMatch) {
-        firstMatch.avg_duration = avg_duration; // replace avg_duration
+        //firstMatch.avg_duration = avg_duration; // replace avg_duration
+        // replace avg_duration
         // planning for computing weighted average with prior data?
-        // firstMatch.avg_duration = (firstMatch.avg_duration * firstMatch.count + avg_duration * timer.__history.length) / (firstMatch.count + timer.__history.length);
+        firstMatch.avg_duration =
+          (firstMatch.avg_duration * firstMatch.last_avg_count +
+            avg_duration * current_avg_count) /
+          (firstMatch.last_avg_count + current_avg_count);
+        firstMatch.last_avg_count = firstMatch.last_avg_count + 1;
       } else {
         let newEntry = {
           date: DATE,
@@ -183,6 +191,7 @@ function saveData(data) {
           metric_type: metric_type,
           clicks: "",
           avg_duration: avg_duration,
+          last_avg_count: current_avg_count, // on execution this will be 1
         };
         csvContent.push(newEntry); // make new row
       }
@@ -217,7 +226,8 @@ function writeFile() {
       row.ncma_artwork_artist,
       row.metric_type,
       row.clicks,
-      row.avg_duration
+      row.avg_duration,
+      row.last_avg_count
     );
 
     if (i === csvContent.length - 1) {
@@ -238,4 +248,17 @@ function writeFile() {
     });
 }
 
-module.exports = saveData;
+/**
+ * Circular depedency workaround
+ *
+ * See replies by Will Stern and Nicolas Gramlich in this thread
+ * How to deal with cyclic dependencies in Node.js
+ * https://stackoverflow.com/questions/10869276/how-to-deal-with-cyclic-dependencies-in-node-js
+ */
+
+module.exports.saveData = saveData;
+
+const analyticsTimerManager =
+  require("./analytics-timer-main-module.js").analyticsTimerManager;
+
+initCSV();

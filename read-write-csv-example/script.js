@@ -25,6 +25,8 @@ function init() {
 
   const startTimer1Btn = document.getElementById("start-timer-1-btn");
   const stopTimer1Btn = document.getElementById("stop-timer-1-btn");
+  const startTimer2Btn = document.getElementById("start-timer-2-btn");
+  const stopTimer2Btn = document.getElementById("stop-timer-2-btn");
 
   const analyticsHandler = window.analyticsHandler;
 
@@ -100,6 +102,28 @@ function init() {
       ncma_artwork_id: "",
       ncma_artwork_title: "",
       ncma_artwork_artist: "",
+    });
+  });
+
+  startTimer2Btn.addEventListener("click", (event) => {
+    analyticsHandler.startTimer({
+      action: "Time on task - Artwork",
+      ncma_digital_label_id: 18,
+      ncma_digital_label_title: "African",
+      ncma_artwork_id: 24,
+      ncma_artwork_title: "Altar to the Hand (Ikegobo)",
+      ncma_artwork_artist: "Edo peoples",
+    });
+  });
+
+  stopTimer2Btn.addEventListener("click", (event) => {
+    analyticsHandler.stopTimer({
+      action: "Time on task - Artwork",
+      ncma_digital_label_id: 18,
+      ncma_digital_label_title: "African",
+      ncma_artwork_id: 24,
+      ncma_artwork_title: "Altar to the Hand (Ikegobo)",
+      ncma_artwork_artist: "Edo peoples",
     });
   });
 }

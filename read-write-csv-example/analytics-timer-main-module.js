@@ -60,9 +60,15 @@ And then I need to create the scheme that reads the previous day and sends it to
 
 const analyticsTimers = [];
 
-const saveData = require("./csv-data-main-module.js"); // initializes csv file
+/**
+ * Circular depedency workaround
+ *
+ * See replies by Will Stern and Nicolas Gramlich in this thread
+ * How to deal with cyclic dependencies in Node.js
+ * https://stackoverflow.com/questions/10869276/how-to-deal-with-cyclic-dependencies-in-node-js
+ */
 
-const analyticsTimerManager = {
+module.exports.analyticsTimerManager = {
   /**
    *
    * @param {object} data - object used to identify the timer and build analytics csv row
@@ -75,7 +81,7 @@ const analyticsTimerManager = {
    * @param {string} data.ncma_artwork_artist
    */
   setupStart: function (data) {
-    const timer = this.create(data);
+    const timer = this.create(true, data);
     timer.start();
   },
 
@@ -87,13 +93,13 @@ const analyticsTimerManager = {
     }
   },
 
-  create: function (data) {
+  create: function (bool, data) {
     const existingTimer = this.find(data);
 
     if (existingTimer) {
       return existingTimer;
     } else {
-      return new analyticsTimer(data);
+      return new analyticsTimer(bool, data);
     }
   },
 
@@ -129,17 +135,42 @@ const analyticsTimerManager = {
   // },
 };
 
+const saveData = require("./csv-data-main-module.js").saveData;
+
 class analyticsTimer {
-  constructor(data) {
-    this.__identity = data;
+  constructor(bool, data) {
+    this.__identity = {
+      action: data.action,
+      ncma_digital_label_id: data.ncma_digital_label_id,
+      ncma_digital_label_title: data.ncma_digital_label_title,
+      ncma_artwork_id: data.ncma_artwork_id,
+      ncma_artwork_title: data.ncma_artwork_title,
+      ncma_artwork_artist: data.ncma_artwork_artist,
+    };
+
+    this.__history = [];
+
+    // push
+    // if (data.avg_duration && data.last_avg_count) {
+    //   for (i = 0; i < data.ast_avg_count; i++) {
+    //     this.__history.push(data.avg_duration);
+    //   }
+    // }
 
     analyticsTimers.push(this);
-    this.start();
+
+    if (bool) {
+      this.start();
+    }
   }
 
   start() {
     this.__initial = Date.now();
   }
+
+  // __saveData(data) {
+  //   saveData(data);
+  // }
 
   stop() {
     if (this.__initial) {
@@ -147,7 +178,7 @@ class analyticsTimer {
       this.__initial = null; // clear
       this.__history.push(duration);
 
-      // calculate list average
+      // calculate history of times average
       const average = (array) => array.reduce((a, b) => a + b) / array.length;
       this.__average = average(this.__history);
 
@@ -164,13 +195,11 @@ class analyticsTimer {
         ncma_artwork_artist: this.__identity.ncma_artwork_artist,
         metric_type: "avg_duration",
         avg_duration: this.__average,
+        current_avg_count: this.__history.length,
       });
     }
   }
 
   __initial = null;
-  __history = [];
+  //__history = [];
 }
-
-//export { analyticsTimerManager };
-module.exports = analyticsTimerManager;
