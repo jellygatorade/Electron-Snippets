@@ -16,7 +16,7 @@ const csvFirstLine = [
   "metric_type",
   "clicks",
   "avg_duration",
-  "last_avg_count",
+  "avg_count",
 ];
 let csvContent = [];
 let writeTimeout = null;
@@ -52,7 +52,7 @@ async function readCSV(path) {
           row.clicks = parseInt(row.clicks); // convert from string to int to increment
         } else if (row.metric_type === "avg_duration") {
           row.avg_duration = parseFloat(row.avg_duration);
-          row.last_avg_count = parseInt(row.last_avg_count);
+          row.avg_count = parseInt(row.avg_count);
 
           analyticsTimerManager.create(false, {
             action: row.action,
@@ -61,8 +61,9 @@ async function readCSV(path) {
             ncma_artwork_id: row.ncma_artwork_id,
             ncma_artwork_title: row.ncma_artwork_title,
             ncma_artwork_artist: row.ncma_artwork_artist,
-            avg_duration: row.avg_duration,
-            last_avg_count: row.last_avg_count,
+            // pass below values as last_session_ to keep accurate weighted average across sessions
+            last_session_avg_duration: row.avg_duration,
+            last_session_avg_count: row.avg_count,
           });
         }
 
@@ -121,9 +122,9 @@ function saveData(data) {
     ncma_artwork_title,
     ncma_artwork_artist,
     metric_type,
-    // (clicks always 1 or prior value)
+    // (clicks always increment by 1)
     avg_duration,
-    current_avg_count,
+    avg_count,
   } = data; // object destructuring
 
   //console.log(data);
@@ -162,7 +163,7 @@ function saveData(data) {
           metric_type: metric_type,
           clicks: 1,
           avg_duration: "",
-          last_avg_count: "",
+          avg_count: "",
         };
         csvContent.push(newEntry); // make new row
       }
@@ -171,14 +172,8 @@ function saveData(data) {
     case "avg_duration":
       // if existing matching row
       if (firstMatch) {
-        //firstMatch.avg_duration = avg_duration; // replace avg_duration
-        // replace avg_duration
-        // planning for computing weighted average with prior data?
-        firstMatch.avg_duration =
-          (firstMatch.avg_duration * firstMatch.last_avg_count +
-            avg_duration * current_avg_count) /
-          (firstMatch.last_avg_count + current_avg_count);
-        firstMatch.last_avg_count = firstMatch.last_avg_count + 1;
+        firstMatch.avg_duration = avg_duration; // replace avg_duration
+        firstMatch.avg_count = avg_count; // replace avg_count
       } else {
         let newEntry = {
           date: DATE,
@@ -191,11 +186,15 @@ function saveData(data) {
           metric_type: metric_type,
           clicks: "",
           avg_duration: avg_duration,
-          last_avg_count: current_avg_count, // on execution this will be 1
+          avg_count: avg_count, // on execution this will be 1
         };
         csvContent.push(newEntry); // make new row
       }
       break;
+
+    default:
+      // do nothing
+      return;
   }
 
   // wait to collect any other immediate actions before writing to csv
@@ -227,7 +226,7 @@ function writeFile() {
       row.metric_type,
       row.clicks,
       row.avg_duration,
-      row.last_avg_count
+      row.avg_count
     );
 
     if (i === csvContent.length - 1) {

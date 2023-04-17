@@ -122,3 +122,5 @@ ipcMain.handle("startAnalyticsTimer", (event, identity) => {
 ipcMain.handle("stopAnalyticsTimer", (event, identity) => {
   analyticsTimerManager.saveReset(identity);
 });
+
+require("./read-write-csv-example/send-prev-csv-data.js");

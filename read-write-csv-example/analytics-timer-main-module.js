@@ -1,64 +1,5 @@
-/*
-
-Requirements
-
-Start a timer on action
-Stop it from somewhere else in program
-
----
-
-What timers will there be?
-- In label overall
-- Within artwork
-
-Will need to be able to identify the correct timer to stop in the stop function
-
----
-
-And then will need to 
-store all timed durations same analytic in a list 
-and take an average of each list
-and then store that average in csv
-
----
-
-Timer will be identifed per analytic ?
-
-Start action will pass data for the analytic
-Stop action will pass the same data
-Also need a stop all timers function in case
-
----
-
-Do I want to store the timer __history in csv? -- this would mean creating the timers when csv is parsed, right?
-Peristing this would require this calculation in csv-data-main-module.js
-// firstMatch.avg_duration = (firstMatch.avg_duration * firstMatch.count + avg_duration * timer.__history.length) / (firstMatch.count + timer.__history.length);
-And moving this script to main process
-
-Maybe start with moving this script to main process...
-
---- 
-
-And then I need to create the scheme that reads the previous day and sends it to API and marks it as stored
-
-*/
-
-/**
- * final data format
- *
- * (date)
- * action
- * ncma_digital_label_id
- * ncma_digital_label_title
- * ncma_artwork_id
- * ncma_artwork_title
- * ncma_artwork_artist
- * metric_type
- * clicks
- * avg_duration
- */
-
 const analyticsTimers = [];
+const minimumTimeToSave = 10 * 1000; // 10 seconds
 
 /**
  * Circular depedency workaround
@@ -138,7 +79,7 @@ module.exports.analyticsTimerManager = {
 const saveData = require("./csv-data-main-module.js").saveData;
 
 class analyticsTimer {
-  constructor(bool, data) {
+  constructor(startOnInitialize, data) {
     this.__identity = {
       action: data.action,
       ncma_digital_label_id: data.ncma_digital_label_id,
@@ -148,18 +89,19 @@ class analyticsTimer {
       ncma_artwork_artist: data.ncma_artwork_artist,
     };
 
+    this.__initial = null;
     this.__history = [];
 
-    // push
-    // if (data.avg_duration && data.last_avg_count) {
-    //   for (i = 0; i < data.ast_avg_count; i++) {
-    //     this.__history.push(data.avg_duration);
-    //   }
-    // }
+    // populate former history to keep weighted average accurate across sessions
+    if (data.last_session_avg_duration && data.last_session_avg_count) {
+      for (let i = 0; i < data.last_session_avg_count; i++) {
+        this.__history.push(data.last_session_avg_duration * 1000); // convert back to milliseconds
+      }
+    }
 
     analyticsTimers.push(this);
 
-    if (bool) {
+    if (startOnInitialize) {
       this.start();
     }
   }
@@ -168,14 +110,17 @@ class analyticsTimer {
     this.__initial = Date.now();
   }
 
-  // __saveData(data) {
-  //   saveData(data);
-  // }
-
   stop() {
     if (this.__initial) {
       const duration = Date.now() - this.__initial;
       this.__initial = null; // clear
+
+      if (duration < minimumTimeToSave) {
+        // do not save
+        // console.log("duration under minimum, not saving");
+        return;
+      }
+
       this.__history.push(duration);
 
       // calculate history of times average
@@ -184,6 +129,8 @@ class analyticsTimer {
 
       // convert to seconds
       this.__average = this.__average / 1000;
+
+      //console.log(this.__history, this.__average, this.__history.length);
 
       // store in csv
       saveData({
@@ -195,11 +142,8 @@ class analyticsTimer {
         ncma_artwork_artist: this.__identity.ncma_artwork_artist,
         metric_type: "avg_duration",
         avg_duration: this.__average,
-        current_avg_count: this.__history.length,
+        avg_count: this.__history.length,
       });
     }
   }
-
-  __initial = null;
-  //__history = [];
 }
