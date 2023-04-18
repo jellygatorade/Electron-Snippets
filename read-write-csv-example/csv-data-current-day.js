@@ -258,6 +258,6 @@ function writeFile() {
 module.exports.saveData = saveData;
 
 const analyticsTimerManager =
-  require("./analytics-timer-main-module.js").analyticsTimerManager;
+  require("./csv-data-analytics-timer.js").analyticsTimerManager;
 
 initCSV();
