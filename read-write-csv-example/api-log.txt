@@ -1,0 +1,6 @@
+Wed, 19 Apr 2023 15:06:00 GMT - file 2023-4-18 - 200 - OK 
+Wed, 19 Apr 2023 15:06:54 GMT - 2023-4-18.csv - 200 - OK 
+Wed, 19 Apr 2023 15:37:51 GMT - 2023-4-18.csv - 406 - Not Acceptable 
+Wed, 19 Apr 2023 15:52:15 GMT - 2023-4-18.csv - 406 - Not Acceptable 
+Wed, 19 Apr 2023 15:54:08 GMT - 2023-4-18.csv - 406 - Not Acceptable - invalid_data_format - Some records may not have been successfully added due to incorrect format. 
+Wed, 19 Apr 2023 16:01:06 GMT - 2023-4-18.csv - 200 - OK 

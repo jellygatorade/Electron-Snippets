@@ -32,17 +32,21 @@
 const fs = require("fs");
 const Papa = require("papaparse"); // for parsing csv
 
-// Using npm package node-fetch because
-// Fetch API is not currently supported in Node.js native
-// But as of February 2022 Node.js is working on including it
-//
-// See this remarks about importing node-fetch into a CommonJS module
-// in "Loading and configuring the module"
-// https://www.npmjs.com/package/node-fetch
-//
+/**
+ * Using npm package node-fetch because
+ * Fetch API is not currently supported in Node.js native
+ * But as of February 2022 Node.js is working on including it
+ *
+ * See this remarks about importing node-fetch into a CommonJS module
+ * in "Loading and configuring the module"
+ * https://www.npmjs.com/package/node-fetch
+ */
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
+/**
+ * Setup
+ */
 const NOW = new Date(); // unix time now
 NOW.setDate(NOW.getDate() - 1); // yesterday
 const YESTERDAY = NOW;
@@ -51,19 +55,23 @@ const YESTERDAYDATE =
   "-" +
   (YESTERDAY.getMonth() + 1) +
   "-" +
-  YESTERDAY.getDate();
+  YESTERDAY.getDate(); // yesterday as string "YYYY-MM-DD"
 
 const csvPath = `${__dirname}/${YESTERDAYDATE}.csv`;
+const logPath = `${__dirname}/api-log.txt`;
+
 const csvContent = [];
 
 /**
  * Read yesterday's csv
  */
-async function readPrevCSV() {
+async function processAndPostYesterdayCSV() {
   if (fs.existsSync(csvPath)) {
     await readCSV(csvPath);
   }
 }
+
+processAndPostYesterdayCSV();
 
 async function readCSV(path) {
   return new Promise(function (resolve, reject) {
@@ -88,21 +96,16 @@ async function readCSV(path) {
 
         delete row.avg_count; // avg_count is used for analytics-timer weighted average and no longer needed
 
-        // push to csvContent
         csvContent.push(row);
       })
       .on("end", () => {
-        //console.log(csvContent);
         resolve();
 
         // trigger post request at random time within the hour
-        const randomMinutes = getRandomInt(60);
-        const randomDelay = 1000 * 60 * randomMinutes;
-        console.log(randomDelay);
+        // const randomMinutes = getRandomInt(60);
+        // const randomDelay = 1000 * 60 * randomMinutes;
+        // setTimeout(sendPostReq, randomDelay, csvContent);
         setTimeout(sendPostReq, 50, csvContent);
-
-        // testing rename csv
-        //renameCSV("success");
       })
       .on("error", (err) => {
         console.log(err);
@@ -110,8 +113,6 @@ async function readCSV(path) {
       });
   });
 }
-
-readPrevCSV();
 
 const creds = {};
 
@@ -135,20 +136,21 @@ async function sendPostReq(body) {
 
   try {
     const response = await fetch(creds.url, settings); /* API URL */
-    console.log(response);
-    const data = await response.json(); // await promise
-    console.log(data); // promise status
-    console.log(response.status);
+    const responseData = await response.json(); // await promise
+    // console.log(responseData); // promise status
+    // console.log(response.status, response.statusText);
 
     if (response.status === 200) {
       renameCSV("success");
+      writeLog(`${response.status} - ${response.statusText}`);
     } else {
       renameCSV("error");
-      // also write some error log with response.status and response.statusText ?
+      writeLog(
+        `${response.status} - ${response.statusText} - ${responseData.code} - ${responseData.message}`
+      );
     }
   } catch (error) {
-    console.log(error);
-    //return e;
+    writeLog(`caught error - ${error}`);
   }
 }
 
@@ -174,4 +176,23 @@ function renameCSV(append) {
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * max);
+}
+
+function writeLog(log) {
+  let writeStream = fs.createWriteStream(logPath, { flags: "a" }); // "a" flag for append
+
+  let dateTime = new Date();
+  dateTime = dateTime.toUTCString();
+
+  writeStream.write(`${dateTime} - ${YESTERDAYDATE}.csv - ${log} \n`);
+
+  writeStream.end();
+
+  writeStream
+    .on("finish", () => {
+      // finished
+    })
+    .on("error", (err) => {
+      console.log(err);
+    });
 }

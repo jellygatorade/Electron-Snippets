@@ -205,7 +205,7 @@ function saveData(data) {
 function writeFile() {
   let writeStream = fs.createWriteStream(csvPath);
 
-  writeStream.write(csvFirstLine.join(",") + "\n", () => {});
+  writeStream.write(csvFirstLine.join(",") + "\n");
 
   //console.log(csvContent);
 
