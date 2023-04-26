@@ -28,6 +28,12 @@ function init() {
   const startTimer2Btn = document.getElementById("start-timer-2-btn");
   const stopTimer2Btn = document.getElementById("stop-timer-2-btn");
 
+  const stopAllTimersBtn = document.getElementById("stop-all-timers-btn");
+  const clearAllTimersBtn = document.getElementById("clear-all-timers-btn");
+  const stopAllArtworksTimersBtn = document.getElementById(
+    "stop-all-artwork-timers-btn"
+  );
+
   const analyticsHandler = window.analyticsHandler;
 
   // engagements
@@ -125,5 +131,19 @@ function init() {
       ncma_artwork_title: "Altar to the Hand (Ikegobo)",
       ncma_artwork_artist: "Edo peoples",
     });
+  });
+
+  //
+
+  stopAllTimersBtn.addEventListener("click", (event) => {
+    analyticsHandler.stopAllTimers();
+  });
+
+  clearAllTimersBtn.addEventListener("click", (event) => {
+    analyticsHandler.clearAllTimers();
+  });
+
+  stopAllArtworksTimersBtn.addEventListener("click", (event) => {
+    analyticsHandler.stopAllTimersOfType("Time on task - Artwork");
   });
 }

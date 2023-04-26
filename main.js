@@ -123,4 +123,16 @@ ipcMain.handle("stopAnalyticsTimer", (event, identity) => {
   analyticsTimerManager.saveReset(identity);
 });
 
+ipcMain.handle("stopAllAnalyticsTimers", (event) => {
+  analyticsTimerManager.stopAll();
+});
+
+ipcMain.handle("clearAllAnalyticsTimers", (event) => {
+  analyticsTimerManager.clearAll();
+});
+
+ipcMain.handle("stopAllAnalyticsTimersOfType", (event, action) => {
+  analyticsTimerManager.stopAllOfType(action);
+});
+
 require("./read-write-csv-example/csv-data-yesterday.js");

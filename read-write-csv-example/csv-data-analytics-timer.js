@@ -1,5 +1,5 @@
 const analyticsTimers = [];
-const minimumTimeToSave = 10 * 1000; // 10 seconds
+const minimumTimeToSave = 0; //10 * 1000; // 10 seconds
 
 /**
  * Circular depedency workaround
@@ -59,9 +59,23 @@ module.exports.analyticsTimerManager = {
     return firstMatch;
   },
 
+  clearAll: function () {
+    analyticsTimers.forEach((timer, i) => {
+      timer.clear();
+    });
+  },
+
   stopAll: function () {
     analyticsTimers.forEach((timer, i) => {
       timer.stop();
+    });
+  },
+
+  stopAllOfType: function (action) {
+    analyticsTimers.forEach((timer, i) => {
+      if (timer.__identity.action === action) {
+        timer.stop();
+      }
     });
   },
 
@@ -108,6 +122,10 @@ class analyticsTimer {
 
   start() {
     this.__initial = Date.now();
+  }
+
+  clear() {
+    this.__initial = null;
   }
 
   stop() {
